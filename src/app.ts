@@ -1,10 +1,12 @@
 import express from 'express'
-import router from './routes/transactions.routes'
-
+import { createServer } from 'http'
+import { setupWebSocket } from './ws/websocket';
 
 const app = express()
-app.use(router)
 app.use(express.json())
+
+const server = createServer(app);
+setupWebSocket(server);
 
 
 export default app
