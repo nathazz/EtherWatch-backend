@@ -1,11 +1,11 @@
-export interface ValidateTransactionInput {
+export interface IValidateTransactionInput {
   txHash: string;
   expectedSender: string;
   expectedReceiver: string;
   expectedAmount: string | number;
 }
 
-export interface ValidateTransactionResult {
+export interface IValidateTransactionResult {
   valid: boolean;
   txHash: string;
   from?: string;

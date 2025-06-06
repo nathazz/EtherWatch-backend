@@ -3,7 +3,7 @@ import { Server } from 'http';
 import { validatePendingTransaction } from '../Validator/pedindgTxs';
 
 
-export function setupWebSocket(server: Server) {
+export async function setupWebSocket(server: Server) {
 
   const wss = new WebSocketServer({ server });
 

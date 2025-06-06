@@ -1,6 +1,6 @@
 import { ethers, TransactionResponse } from "ethers";
 import { provider } from "../blockchain/provider";
-import { ValidateTransactionInput, ValidateTransactionResult } from "../interfaces/validate";
+import { IValidateTransactionInput, IValidateTransactionResult } from "../interfaces/validates";
 
 function isTransactionValid(
   tx: TransactionResponse,
@@ -24,8 +24,8 @@ export async function validatePendingTransaction(
     expectedSender,
     expectedReceiver,
     expectedAmount,
-  }: ValidateTransactionInput,
-  callback: (result: ValidateTransactionResult) => void,
+  }: IValidateTransactionInput,
+  callback: (result: IValidateTransactionResult) => void,
   timeoutMs = 30000
 ) {
   const sender = expectedSender.toLowerCase();
@@ -62,6 +62,6 @@ export async function validatePendingTransaction(
       valid: false,
       txHash: "",
       reason: "Timeout: no valid transaction found!",
-    } as ValidateTransactionResult);
+    } as IValidateTransactionResult);
   }, timeoutMs);
 }
