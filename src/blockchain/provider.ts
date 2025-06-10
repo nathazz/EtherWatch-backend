@@ -1,3 +1,5 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
-export const provider = new ethers.WebSocketProvider(`wss://mainnet.infura.io/ws/v3/${process.env.INFURA_KEY}`)
+export const provider = new ethers.WebSocketProvider(
+  `wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY} `,
+);

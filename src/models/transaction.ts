@@ -1,12 +1,12 @@
-import mongoose, { Schema, Document, model } from "mongoose";
-import { IValidateTransactionResult } from "../interfaces/validates";
+import mongoose, { Schema, Document, model } from 'mongoose';
+import { IValidateTransactionResult } from '../interfaces/validates';
 
 export interface ITransaction extends Document, Partial<IValidateTransactionResult> {
   hash: string;
   from: string;
   to: string;
   value: string;
-  valid: boolean; 
+  valid: boolean;
   confirmed: boolean;
   createdAt?: Date;
 }
@@ -18,9 +18,9 @@ const TransactionSchema = new Schema<ITransaction>(
     to: { type: String, required: true },
     value: { type: String, required: true },
     valid: { type: Boolean, required: true },
-    confirmed: {type: Boolean, required: true}
+    confirmed: { type: Boolean, required: true },
   },
-  { timestamps: true } 
+  { timestamps: true },
 );
 
-export default model<ITransaction>("Transaction", TransactionSchema);
+export default model<ITransaction>('Transaction', TransactionSchema);

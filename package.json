@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "It's a reader of crypto",
   "main": "main.ts",
-"scripts": {
-  "dev": "nodemon"
-},
+  "scripts": {
+    "dev": "nodemon"
+  },
   "author": "nathan",
   "license": "ISC",
   "devDependencies": {
@@ -20,6 +20,7 @@
     "nodemon": "^3.1.10",
     "ora": "^8.2.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "ws": "^8.18.2"
   },
