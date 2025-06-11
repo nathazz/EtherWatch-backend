@@ -1,18 +1,25 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
-import { HandlerAllTransactions } from './handlers/allTransactions';
+import { WebSocketServer, WebSocket } from "ws";
+import { Server } from "http";
+import {
+  getAllPendingTxs,
+  getSpecificPendingTxs,
+  watchBalance,
+} from "./functions/Transactions";
+import { MESSAGE_TYPES } from "../utils/constants";
 
-const clients = new Set<WebSocket>();
-const allTransactionsSubscribers = new Set<WebSocket>();
+const setClients = new Set<WebSocket>();
+const setAllTx = new Set<WebSocket>();
+const setSpecificPendingTx = new Set<WebSocket>();
+const setGetBalance = new Set<WebSocket>();
 
 let isProviderListening = false;
 
 export async function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ server });
 
-  wss.on('connection', (ws) => {
-    clients.add(ws);
-    ws.send(JSON.stringify({ type: 'connected' }));
+  wss.on("connection", (ws) => {
+    setClients.add(ws);
+    ws.send(JSON.stringify({ type: "connected" }));
 
     let isAlive = true;
 
@@ -20,8 +27,11 @@ export async function setupWebSocket(server: Server) {
       if (!isAlive) {
         clearInterval(interval);
         ws.terminate();
-        clients.delete(ws);
-        allTransactionsSubscribers.delete(ws);
+
+        setClients.delete(ws);
+        setSpecificPendingTx.delete(ws);
+        setAllTx.delete(ws);
+        setGetBalance.delete(ws);
         return;
       }
 
@@ -29,37 +39,82 @@ export async function setupWebSocket(server: Server) {
       ws.ping();
     }, 15000);
 
-    ws.on('pong', () => {
+    ws.on("pong", () => {
       isAlive = true;
     });
 
-    ws.on('message', (data) => {
+    ws.on("message", async (data) => {
       try {
-        const message = JSON.parse(data.toString());
+        const msg = JSON.parse(data.toString());
+        const address = msg.data?.address;
 
-        if (message.type === 'allTransactions') {
-          allTransactionsSubscribers.add(ws);
+        switch (msg.type) {
+          case MESSAGE_TYPES.ALL_TRANSACTIONS:
+            setAllTx.add(ws);
 
-          if (!isProviderListening) {
-            HandlerAllTransactions(clients);
-            isProviderListening = true;
-          }
+            if (!isProviderListening) {
+              await getAllPendingTxs(setAllTx);
+              isProviderListening = true;
+            }
+
+            break;
+
+          case MESSAGE_TYPES.ONE_ADDRESS:
+
+            if (!address) {
+              ws.send(JSON.stringify({ error: "Address not provided" }));
+              return;
+            }
+
+            setSpecificPendingTx.add(ws);
+
+            if (!isProviderListening) {
+              await getSpecificPendingTxs(address, setSpecificPendingTx);
+              isProviderListening = true;
+            }
+
+            break;
+
+          case MESSAGE_TYPES.GET_BALANCE:
+
+            if (!address) {
+              ws.send(JSON.stringify({ error: "Address not provided" }));
+              return;
+            }
+
+            setGetBalance.add(ws);
+
+            if (!isProviderListening) {
+              await watchBalance(address, setGetBalance);
+              isProviderListening = true;
+            }
+
+            break;
+
+          default:
+            ws.send(
+              JSON.stringify({ error: `Unknown message type: ${msg.type}` }),
+            );
         }
       } catch (err) {
-        ws.send(JSON.stringify({ error: `Invalid message received:${data}` }));
+        ws.send(JSON.stringify({ error: `Invalid message received: ${data}` }));
       }
     });
 
-    ws.on('close', () => {
+    ws.on("close", () => {
       clearInterval(interval);
-      clients.delete(ws);
-      allTransactionsSubscribers.delete(ws);
+      setClients.delete(ws);
+      setAllTx.delete(ws);
+      setSpecificPendingTx.delete(ws);
+      setGetBalance.delete(ws);
     });
 
-    ws.on('error', (err) => {
+    ws.on("error", (err) => {
       ws.send(JSON.stringify({ error: `WebSocket error:${err}` }));
-      clients.delete(ws);
-      allTransactionsSubscribers.delete(ws);
+      setClients.delete(ws);
+      setSpecificPendingTx.delete(ws);
+      setAllTx.delete(ws);
+      setGetBalance.delete(ws);
     });
   });
 }

@@ -1,7 +1,9 @@
-import mongoose, { Schema, Document, model } from 'mongoose';
-import { IValidateTransactionResult } from '../interfaces/validates';
+import mongoose, { Schema, Document, model } from "mongoose";
+import { IValidateTransactionResult } from "../interfaces/validates";
 
-export interface ITransaction extends Document, Partial<IValidateTransactionResult> {
+export interface ITransaction
+  extends Document,
+    Partial<IValidateTransactionResult> {
   hash: string;
   from: string;
   to: string;
@@ -23,4 +25,4 @@ const TransactionSchema = new Schema<ITransaction>(
   { timestamps: true },
 );
 
-export default model<ITransaction>('Transaction', TransactionSchema);
+export default model<ITransaction>("Transaction", TransactionSchema);
