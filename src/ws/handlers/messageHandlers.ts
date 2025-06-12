@@ -12,7 +12,7 @@ import {
   getFeeData,
   getSpecificPendingTxs,
   watchBalance,
-} from "../functions/Transactions";
+} from "../functions/ethEvents";
 import { WebSocket } from "ws";
 
 export const messageHandlers: Record<

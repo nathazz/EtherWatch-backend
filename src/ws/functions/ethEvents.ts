@@ -91,24 +91,30 @@ export async function watchBalance(
   });
 }
 
-export async function getFeeData(subscribers: Set<WebSocket>) {
-  const now = Date.now();
+export async function getFeeData(
+  subscribers: Set<WebSocket>,
+  intervalMs = 5000,
+) {
+  let lastGasPrice: string | null = null;
+  setInterval(async () => {
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice;
 
-  if (now - lastSentTime < RATE_LIMIT_MS) return;
-  lastSentTime = now;
+    if (!gasPrice) return;
 
-  const feeData = await provider.getFeeData();
+    const gasPriceGwei = ethers.formatUnits(gasPrice, "gwei");
 
-  if (!feeData.gasPrice) return;
+    const message = JSON.stringify({
+      type: MESSAGE_TYPES.FEE_DATA,
+      payload: gasPriceGwei,
+    });
 
-  const message = JSON.stringify({
-    type: MESSAGE_TYPES.FEE_DATA,
-    payload: ethers.formatUnits(feeData.gasPrice, "gwei"),
-  });
+    for (const client of subscribers) {
+      if (client.readyState === client.OPEN && gasPriceGwei !== lastGasPrice) {
+        lastGasPrice = gasPriceGwei;
 
-  for (const client of subscribers) {
-    if (client.readyState === client.OPEN) {
-      client.send(message);
+        client.send(message);
+      }
     }
-  }
+  }, intervalMs);
 }
