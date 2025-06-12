@@ -11,12 +11,10 @@
   "devDependencies": {
     "@tsconfig/node23": "^23.0.2",
     "@tsconfig/recommended": "^1.0.8",
-    "@types/mongoose": "^5.11.96",
     "@types/node": "^22.15.21",
     "@types/ws": "^8.18.1",
     "chalk": "^5.4.1",
     "figlet": "^1.8.1",
-    "mongoose": "^8.15.1",
     "nodemon": "^3.1.10",
     "ora": "^8.2.0",
     "ts-node": "^10.9.2",
