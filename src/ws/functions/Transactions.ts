@@ -1,6 +1,6 @@
 import type { WebSocket } from "ws";
 import { provider } from "../../blockchain/provider";
-import { formatEther } from "ethers";
+import { ethers, formatEther } from "ethers";
 import { MESSAGE_TYPES } from "../../utils/constants";
 
 const RATE_LIMIT_MS = 1000;
@@ -32,22 +32,31 @@ export async function getSpecificPendingTxs(
   address: string,
   subscribers: Set<WebSocket>,
 ) {
+  const normalizedAddress = address.toLowerCase();
+
   provider.on("pending", async (txHash) => {
-    const tx = await provider.getTransaction(txHash);
-    if (!tx) return;
+    try {
+      const tx = await provider.getTransaction(txHash);
+      if (!tx || (!tx.to && !tx.from)) return;
 
-    const clientAddress =
-      tx.from?.toLowerCase() === address || tx.to?.toLowerCase() === address;
+      const isRelevantTx =
+        tx.from?.toLowerCase() === normalizedAddress ||
+        tx.to?.toLowerCase() === normalizedAddress;
 
-    for (const client of subscribers) {
-      if (client.readyState === client.OPEN && clientAddress) {
-        client.send(
-          JSON.stringify({
-            type: MESSAGE_TYPES.ONE_ADDRESS,
-            payload: tx,
-          }),
-        );
+      if (!isRelevantTx) return;
+
+      const message = JSON.stringify({
+        type: MESSAGE_TYPES.ONE_ADDRESS_TRANSACTION,
+        payload: tx,
+      });
+
+      for (const client of subscribers) {
+        if (client.readyState === client.OPEN) {
+          client.send(message);
+        }
       }
+    } catch (err) {
+      console.error("Error processing tx:", err);
     }
   });
 }
@@ -80,4 +89,26 @@ export async function watchBalance(
       console.error(`Error to get balance${address}:`, error);
     }
   });
+}
+
+export async function getFeeData(subscribers: Set<WebSocket>) {
+  const now = Date.now();
+
+  if (now - lastSentTime < RATE_LIMIT_MS) return;
+  lastSentTime = now;
+
+  const feeData = await provider.getFeeData();
+
+  if (!feeData.gasPrice) return;
+
+  const message = JSON.stringify({
+    type: MESSAGE_TYPES.FEE_DATA,
+    payload: ethers.formatUnits(feeData.gasPrice, "gwei"),
+  });
+
+  for (const client of subscribers) {
+    if (client.readyState === client.OPEN) {
+      client.send(message);
+    }
+  }
 }

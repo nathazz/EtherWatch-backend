@@ -1,9 +1,12 @@
 import { createServer } from "http";
-import app from "./app";
+import express from "express";
 import "dotenv/config";
 import { setupWebSocket } from "./ws/setup";
 import dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
+
+const app = express();
+app.use(express.json());
 
 async function start() {
   const server = createServer(app);
@@ -17,3 +20,5 @@ async function start() {
 }
 
 start();
+
+export default app;

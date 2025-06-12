@@ -1,12 +1,15 @@
+import { ethers } from "ethers";
 import { MessageType, WebSocketMessage } from "../../interfaces/validates";
 import {
   allTxClients,
   balanceWatchers,
+  gasFeeClients,
   registerClientInSet,
   specificTxClients,
 } from "../../utils/clientRegistry";
 import {
   getAllPendingTxs,
+  getFeeData,
   getSpecificPendingTxs,
   watchBalance,
 } from "../functions/Transactions";
@@ -17,29 +20,70 @@ export const messageHandlers: Record<
   (ws: WebSocket, msg: WebSocketMessage) => Promise<void>
 > = {
   allTransactions: async (ws) => {
-    allTxClients.add(ws);
-    await getAllPendingTxs(allTxClients);
+    try {
+      allTxClients.add(ws);
+      await getAllPendingTxs(allTxClients);
+    } catch (error) {
+      ws.send(JSON.stringify({ error: "Internal server error" }));
+      console.error(error);
+    }
   },
 
-  oneAddress: async (ws, msg) => {
-    const address = msg.data?.address;
-    if (!address) {
-      return ws.send(JSON.stringify({ error: "Address not provided" }));
-    }
-    registerClientInSet(specificTxClients, address, ws);
-    if (specificTxClients.get(address)!.size === 1) {
-      await getSpecificPendingTxs(address, specificTxClients.get(address)!);
+  oneAddressTransaction: async (ws, msg) => {
+    try {
+      const address = msg.data?.address;
+
+      if (!address) {
+        return ws.send(JSON.stringify({ error: "Address not provided" }));
+      }
+
+      if (!ethers.isAddress(address)) {
+        return ws.send(JSON.stringify({ error: "Invalid Ethereum address" }));
+      }
+
+      registerClientInSet(specificTxClients, address, ws);
+
+      const clientsSet = specificTxClients.get(address);
+      if (clientsSet && clientsSet.size === 1) {
+        await getSpecificPendingTxs(address, clientsSet);
+      }
+    } catch (error) {
+      ws.send(JSON.stringify({ error: "Internal server error" }));
+      console.error(error);
     }
   },
 
   getBalance: async (ws, msg) => {
-    const address = msg.data?.address;
-    if (!address) {
-      return ws.send(JSON.stringify({ error: "Address not provided" }));
+    try {
+      const address = msg.data?.address;
+
+      if (!address) {
+        return ws.send(JSON.stringify({ error: "Address not provided" }));
+      }
+
+      if (!ethers.isAddress(address)) {
+        return ws.send(JSON.stringify({ error: "Invalid Ethereum address" }));
+      }
+
+      registerClientInSet(balanceWatchers, address, ws);
+
+      const clientsSet = balanceWatchers.get(address);
+      if (clientsSet && clientsSet.size === 1) {
+        await watchBalance(address, balanceWatchers.get(address)!);
+      }
+    } catch (error) {
+      ws.send(JSON.stringify({ error: "Internal server error" }));
+      console.error(error);
     }
-    registerClientInSet(balanceWatchers, address, ws);
-    if (balanceWatchers.get(address)!.size === 1) {
-      await watchBalance(address, balanceWatchers.get(address)!);
+  },
+
+  feeData: async (ws) => {
+    try {
+      gasFeeClients.add(ws);
+      await getFeeData(gasFeeClients);
+    } catch (error) {
+      ws.send(JSON.stringify({ error: "Internal server error" }));
+      console.error(error);
     }
   },
 };

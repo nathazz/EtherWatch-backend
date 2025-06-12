@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 export const specificTxClients = new Map<string, Set<WebSocket>>();
 export const balanceWatchers = new Map<string, Set<WebSocket>>();
 export const allTxClients = new Set<WebSocket>();
+export const gasFeeClients = new Set<WebSocket>();
 
 export function registerClientInSet(
   map: Map<string, Set<WebSocket>>,

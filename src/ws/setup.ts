@@ -1,9 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { Server } from "http";
 import { setupKeepAlive } from "../utils/ping";
-import {
-  unregisterClient,
-} from "../utils/clientRegistry";
+import { unregisterClient } from "../utils/clientRegistry";
 import { messageHandlers } from "./handlers/messageHandlers";
 import { WebSocketMessage } from "../interfaces/validates";
 
@@ -21,8 +19,7 @@ export async function setupWebSocket(server: Server) {
 
         if (handler) {
           await handler(ws, msg);
-        } 
-      
+        }
       } catch (err) {
         ws.send(JSON.stringify({ error: `Invalid message received: ${data}` }));
       }
