@@ -40,15 +40,13 @@ export async function getSpecificPendingTxs(
       tx.from?.toLowerCase() === address || tx.to?.toLowerCase() === address;
 
     for (const client of subscribers) {
-      if (client.readyState === client.OPEN) {
-        if (clientAddress) {
-          client.send(
-            JSON.stringify({
-              type: MESSAGE_TYPES.ONE_ADDRESS,
-              payload: tx,
-            }),
-          );
-        }
+      if (client.readyState === client.OPEN && clientAddress) {
+        client.send(
+          JSON.stringify({
+            type: MESSAGE_TYPES.ONE_ADDRESS,
+            payload: tx,
+          }),
+        );
       }
     }
   });

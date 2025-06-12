@@ -1,0 +1,29 @@
+import { WebSocket } from "ws";
+
+export const specificTxClients = new Map<string, Set<WebSocket>>();
+export const balanceWatchers = new Map<string, Set<WebSocket>>();
+export const allTxClients = new Set<WebSocket>();
+
+export function registerClientInSet(
+  map: Map<string, Set<WebSocket>>,
+  key: string,
+  ws: WebSocket,
+) {
+  if (!map.has(key)) {
+    map.set(key, new Set());
+  }
+  map.get(key)!.add(ws);
+}
+
+export function unregisterClient(ws: WebSocket) {
+  allTxClients.delete(ws);
+
+  for (const map of [specificTxClients, balanceWatchers]) {
+    for (const [key, set] of map.entries()) {
+      set.delete(ws);
+      if (set.size === 0) {
+        map.delete(key);
+      }
+    }
+  }
+}
