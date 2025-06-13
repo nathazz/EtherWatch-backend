@@ -5,12 +5,10 @@ import {
   balanceWatchers,
   gasFeeClients,
   registerClientInSet,
-  specificTxClients,
 } from "../../utils/clientRegistry";
 import {
   getAllPendingTxs,
   getFeeData,
-  getSpecificPendingTxs,
   watchBalance,
 } from "../functions/ethEvents";
 import { WebSocket } from "ws";
@@ -23,30 +21,6 @@ export const messageHandlers: Record<
     try {
       allTxClients.add(ws);
       await getAllPendingTxs(allTxClients);
-    } catch (error) {
-      ws.send(JSON.stringify({ error: "Internal server error" }));
-      console.error(error);
-    }
-  },
-
-  oneAddressTransaction: async (ws, msg) => {
-    try {
-      const address = msg.data?.address;
-
-      if (!address) {
-        return ws.send(JSON.stringify({ error: "Address not provided" }));
-      }
-
-      if (!ethers.isAddress(address)) {
-        return ws.send(JSON.stringify({ error: "Invalid Ethereum address" }));
-      }
-
-      registerClientInSet(specificTxClients, address, ws);
-
-      const clientsSet = specificTxClients.get(address);
-      if (clientsSet && clientsSet.size === 1) {
-        await getSpecificPendingTxs(address, clientsSet);
-      }
     } catch (error) {
       ws.send(JSON.stringify({ error: "Internal server error" }));
       console.error(error);
@@ -68,7 +42,7 @@ export const messageHandlers: Record<
       registerClientInSet(balanceWatchers, address, ws);
 
       const clientsSet = balanceWatchers.get(address);
-      if (clientsSet && clientsSet.size === 1) {
+      if (clientsSet && clientsSet.size >= 1) {
         await watchBalance(address, balanceWatchers.get(address)!);
       }
     } catch (error) {

@@ -17,46 +17,13 @@ export async function getAllPendingTxs(subscribers: Set<WebSocket>) {
     const txInfo = await provider.getTransaction(tx);
     const message = JSON.stringify({
       type: MESSAGE_TYPES.ALL_TRANSACTIONS,
-      payload: txInfo,
+      txInfo: txInfo,
     });
 
     for (const client of subscribers) {
       if (client.readyState === client.OPEN) {
         client.send(message);
       }
-    }
-  });
-}
-
-export async function getSpecificPendingTxs(
-  address: string,
-  subscribers: Set<WebSocket>,
-) {
-  const normalizedAddress = address.toLowerCase();
-
-  provider.on("pending", async (txHash) => {
-    try {
-      const tx = await provider.getTransaction(txHash);
-      if (!tx || (!tx.to && !tx.from)) return;
-
-      const isRelevantTx =
-        tx.from?.toLowerCase() === normalizedAddress ||
-        tx.to?.toLowerCase() === normalizedAddress;
-
-      if (!isRelevantTx) return;
-
-      const message = JSON.stringify({
-        type: MESSAGE_TYPES.ONE_ADDRESS_TRANSACTION,
-        payload: tx,
-      });
-
-      for (const client of subscribers) {
-        if (client.readyState === client.OPEN) {
-          client.send(message);
-        }
-      }
-    } catch (err) {
-      console.error("Error processing tx:", err);
     }
   });
 }
@@ -70,6 +37,8 @@ export async function watchBalance(
   provider.on("block", async () => {
     try {
       const balance = await provider.getBalance(address);
+      const transactionCount = await provider.getTransactionCount(address);
+
       const eth = formatEther(balance);
 
       for (const client of subscribers) {
@@ -81,6 +50,7 @@ export async function watchBalance(
               type: MESSAGE_TYPES.GET_BALANCE,
               address,
               balance: eth,
+              txCount: transactionCount,
             }),
           );
         }
@@ -106,7 +76,7 @@ export async function getFeeData(
 
     const message = JSON.stringify({
       type: MESSAGE_TYPES.FEE_DATA,
-      payload: gasPriceGwei,
+      gasPrice: gasPriceGwei,
     });
 
     for (const client of subscribers) {

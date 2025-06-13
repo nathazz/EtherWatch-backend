@@ -4,7 +4,8 @@
   "description": "It's a reader of crypto",
   "main": "main.ts",
   "scripts": {
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "start": "ts-node src/server.ts"
   },
   "author": "nathan",
   "license": "ISC",
@@ -13,10 +14,7 @@
     "@tsconfig/recommended": "^1.0.8",
     "@types/node": "^22.15.21",
     "@types/ws": "^8.18.1",
-    "chalk": "^5.4.1",
-    "figlet": "^1.8.1",
     "nodemon": "^3.1.10",
-    "ora": "^8.2.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
