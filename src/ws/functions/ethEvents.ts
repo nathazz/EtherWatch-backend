@@ -63,20 +63,26 @@ export async function watchBalance(
 
 export async function getFeeData(
   subscribers: Set<WebSocket>,
-  intervalMs = 5000,
+  intervalMs = 8000,
 ) {
   let lastGasPrice: string | null = null;
   setInterval(async () => {
     const feeData = await provider.getFeeData();
     const gasPrice = feeData.gasPrice;
+    const maxFeeGas = feeData.maxFeePerGas;
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
 
-    if (!gasPrice) return;
+    if (!gasPrice || !maxFeeGas || !maxPriorityFeePerGas) return;
 
     const gasPriceGwei = ethers.formatUnits(gasPrice, "gwei");
+    const maxFeeGwei = ethers.formatUnits(maxFeeGas, "gwei");
+    const maxPriorityGwei = ethers.formatUnits(maxPriorityFeePerGas, "gwei");
 
     const message = JSON.stringify({
       type: MESSAGE_TYPES.FEE_DATA,
       gasPrice: gasPriceGwei,
+      maxFeePerGas: maxFeeGwei,
+      maxPriorityFeePerGas: maxPriorityGwei
     });
 
     for (const client of subscribers) {
