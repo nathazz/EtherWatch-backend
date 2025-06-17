@@ -3,10 +3,13 @@ import express from "express";
 import "dotenv/config";
 import { setupWebSocket } from "./ws/setup";
 import dotenv from "dotenv";
+import router from "./http/routes/routes";
+
 dotenv.config({ path: "../.env" });
 
 const app = express();
 app.use(express.json());
+app.use("/api", router);
 
 async function start() {
   const server = createServer(app);
@@ -15,7 +18,9 @@ async function start() {
 
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
-    console.log(`Server listening on wss://localhost:${PORT}`);
+    console.log(
+      `Server listening on http://localhost:${PORT} + ws://localhost:${PORT}`,
+    );
   });
 }
 

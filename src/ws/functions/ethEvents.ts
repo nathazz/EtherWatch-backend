@@ -82,7 +82,7 @@ export async function getFeeData(
       type: MESSAGE_TYPES.FEE_DATA,
       gasPrice: gasPriceGwei,
       maxFeePerGas: maxFeeGwei,
-      maxPriorityFeePerGas: maxPriorityGwei
+      maxPriorityFeePerGas: maxPriorityGwei,
     });
 
     for (const client of subscribers) {
