@@ -7,5 +7,5 @@ services:
       - .env
     container_name: etherWatch
     ports:
-      - "5000:5000"
+      - "5005:5005"
     restart: always
