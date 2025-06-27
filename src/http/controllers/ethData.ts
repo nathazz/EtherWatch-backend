@@ -10,7 +10,10 @@ export async function getEthereumPrice(req: Request, res: Response) {
           ids: "ethereum",
           vs_currencies: "usd,brl,eur",
         },
-      }
+        headers: {
+          "x-cg-demo-api-key": process.env.COIN_GECKO_KEY,
+        },
+      },
     );
 
     const price = data.ethereum;
@@ -43,7 +46,10 @@ export async function getEthereumMarketData(req: Request, res: Response) {
           include_24hr_change: true,
           include_last_updated_at: true,
         },
-      }
+        headers: {
+          "x-cg-demo-api-key": process.env.COIN_GECKO_KEY,
+        },
+      },
     );
 
     const eth = data.ethereum;

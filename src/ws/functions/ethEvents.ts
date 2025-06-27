@@ -3,21 +3,33 @@ import { provider } from "../../blockchain/provider";
 import { ethers, formatEther } from "ethers";
 import { MESSAGE_TYPES } from "../../utils/constants";
 
-const RATE_LIMIT_MS = 1000;
-let lastSentTime = 0;
+const RATE_LIMIT_MS = 3000;
+let txPool: any[] = [];
+const MAX_POOL_SIZE = 300;
 
 export async function getAllPendingTxs(subscribers: Set<WebSocket>) {
-  provider.on("pending", async (tx) => {
-    const now = Date.now();
+  provider.on("pending", async (txHash) => {
+    try {
+      const tx = await provider.getTransaction(txHash);
+      if (tx) {
+        txPool.push(tx);
 
-    if (now - lastSentTime < RATE_LIMIT_MS) return;
+        if (txPool.length >= MAX_POOL_SIZE) {
+          txPool.shift();
+        }
+        txPool.push(tx);
+      }
+    } catch (err) {
+      console.error("Error to found TX's:", err);
+    }
+  });
 
-    lastSentTime = now;
+  setInterval(() => {
+    if (txPool.length === 0) return;
 
-    const txInfo = await provider.getTransaction(tx);
     const message = JSON.stringify({
-      type: MESSAGE_TYPES.ALL_TRANSACTIONS,
-      txInfo: txInfo,
+      type: MESSAGE_TYPES.ALL_PENDING_TRANSACTIONS,
+      txs: txPool,
     });
 
     for (const client of subscribers) {
@@ -25,7 +37,9 @@ export async function getAllPendingTxs(subscribers: Set<WebSocket>) {
         client.send(message);
       }
     }
-  });
+
+    txPool = [];
+  }, RATE_LIMIT_MS);
 }
 
 export async function watchBalance(
@@ -61,12 +75,10 @@ export async function watchBalance(
   });
 }
 
-export async function getFeeData(
-  subscribers: Set<WebSocket>,
-  intervalMs = 8000,
-) {
+export async function getFeeData(subscribers: Set<WebSocket>) {
   let lastGasPrice: string | null = null;
-  setInterval(async () => {
+
+  provider.on("block", async () => {
     const feeData = await provider.getFeeData();
     const gasPrice = feeData.gasPrice;
     const maxFeeGas = feeData.maxFeePerGas;
@@ -92,5 +104,5 @@ export async function getFeeData(
         client.send(message);
       }
     }
-  }, intervalMs);
+  });
 }

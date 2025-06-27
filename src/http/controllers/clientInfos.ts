@@ -64,24 +64,24 @@ export async function getEnsProfile(req: Request, res: Response) {
     const { address } = req.params;
 
     if (!address || !ethers.isAddress(address)) {
-      res.status(400).json({ error: "Invalid address!" });
-      return;
+       res.status(400).json({ error: "Invalid Ethereum address." });
+       return
     }
 
     const checksumAddress = ethers.getAddress(address);
 
     const ensName = await httpProvider.lookupAddress(checksumAddress);
     const avatar = ensName ? await httpProvider.getAvatar(ensName) : null;
-
+ 
     if (!ensName) {
-      res.status(404).json({ error: "ENS name not found for this address." });
-      return;
+     res.status(404).json({ error: "ENS name not found for this address." });
+     return
     }
 
-    res.status(200).json({
+     res.status(200).json({
       ens: {
         name: ensName,
-        avatar: avatar,
+        avatar,
       },
     });
   } catch (error) {

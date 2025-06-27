@@ -17,7 +17,7 @@ export const messageHandlers: Record<
   MessageType,
   (ws: WebSocket, msg: WebSocketMessage) => Promise<void>
 > = {
-  allTransactions: async (ws) => {
+  allPendingTransactions: async (ws) => {
     try {
       allTxClients.add(ws);
       await getAllPendingTxs(allTxClients);

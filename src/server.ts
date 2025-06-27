@@ -4,10 +4,20 @@ import "dotenv/config";
 import { setupWebSocket } from "./ws/setup";
 import dotenv from "dotenv";
 import router from "./http/routes/routes";
+import cors from "cors";
 
 dotenv.config({ path: "../.env" });
 
 const app = express();
+
+app.use(
+  cors({
+    origin: process.env.FRONT_END_DEV,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
 app.use(express.json());
 app.use("/api", router);
 
@@ -25,5 +35,3 @@ async function start() {
 }
 
 start();
-
-export default app;
