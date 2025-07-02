@@ -32,7 +32,7 @@ router.get("/eth_market", getEthereumMarketData);
 //metamask
 router.post("/nonce", createNonce);
 router.post("/login", createClientMetaMask);
-router.post("/logout", logout)
-router.get("/check-auth", checkAuth)
+router.post("/logout", logout);
+router.get("/check-auth", checkAuth);
 
 export default router;

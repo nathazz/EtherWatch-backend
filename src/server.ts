@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import express from "express";
 import "dotenv/config";
-import { setupWebSocket } from "./ws/setup";
+import { setupSocketIO } from "./ws/setupSocket";
 import dotenv from "dotenv";
 import router from "./http/routes/routes";
 import cors from "cors";
@@ -27,7 +27,7 @@ app.use("/api", router);
 async function start() {
   const server = createServer(app);
 
-  await setupWebSocket(server);
+  await setupSocketIO(server);
 
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {

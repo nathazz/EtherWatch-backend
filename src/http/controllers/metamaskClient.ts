@@ -80,10 +80,10 @@ export async function createClientMetaMask(req: Request, res: Response) {
 
 export function checkAuth(req: Request, res: Response) {
   const token = req.cookies?.authToken;
-  
+
   if (!token) {
     res.status(401).json({ error: "Not authenticated" });
-    return
+    return;
   }
 
   try {
