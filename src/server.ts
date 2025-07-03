@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import express from "express";
 import "dotenv/config";
-import { setupSocketIO } from "./ws/setupSocket";
+import { setupSocketIO } from "./socket/setupSocket";
 import dotenv from "dotenv";
 import router from "./http/routes/routes";
 import cors from "cors";

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
+import { MarketDataSchema, PriceSchema } from "../../validators/ethData.schema";
 
 export async function getEthereumPrice(req: Request, res: Response) {
   try {
@@ -17,14 +18,21 @@ export async function getEthereumPrice(req: Request, res: Response) {
     );
 
     const price = data.ethereum;
-
-    res.json({
+    const response = {
       price: {
         usd: price.usd,
         brl: price.brl,
         eur: price.eur,
       },
-    });
+    };
+
+    const parsed = PriceSchema.safeParse(response);
+    if (!parsed.success) {
+      res.status(500).json({ error: "Invalid price data format" });
+      return;
+    }
+
+    res.json(parsed.data);
   } catch (error) {
     console.error(`Error fetching ETH price:`, error);
     res.status(500).json({
@@ -53,8 +61,7 @@ export async function getEthereumMarketData(req: Request, res: Response) {
     );
 
     const eth = data.ethereum;
-
-    res.json({
+    const response = {
       market_data: {
         market_cap: {
           usd: eth.usd_market_cap,
@@ -73,7 +80,16 @@ export async function getEthereumMarketData(req: Request, res: Response) {
         },
         last_updated: eth.last_updated_at,
       },
-    });
+    };
+
+    const parsed = MarketDataSchema.safeParse(response);
+
+    if (!parsed.success) {
+      res.status(500).json({ error: "Invalid market data format" });
+      return;
+    }
+
+    res.json(parsed.data);
   } catch (error) {
     console.error(`Error fetching ETH market data:`, error);
     res.status(500).json({

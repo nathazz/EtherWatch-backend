@@ -8,12 +8,10 @@ import {
 } from "./events/ethEvents";
 import { provider } from "../blockchain/provider";
 
-let startedPendingListener = false; 
-
 export async function setupSocketIO(server: HTTPServer) {
   const io = new Server(server, {
     cors: {
-      origin: process.env.FRONT_END_DEV,
+      origin: process.env.FRONT_END_DEV || "*",
       methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,
@@ -21,17 +19,23 @@ export async function setupSocketIO(server: HTTPServer) {
   });
 
   provider.on("block", async () => {
-    await updateBalances(io);
-    await updateFeeData(io);
+    try {
+      await updateBalances(io);
+      await updateFeeData(io);
+    } catch (error) {
+      console.error("Error on block handler:", error);
+    }
   });
 
   io.on("connection", (socket) => {
+    console.log("client connected", socket.id);
 
     socket.on("subscribePendingTxs", () => {
-      if (!startedPendingListener) {
-        startedPendingListener = true;
-        setupPendingTxs(io); 
-      }
+      provider.listenerCount("pending").then((listenerCount: number) => {
+        if (listenerCount === 0) {
+          setupPendingTxs(io);
+        }
+      });
 
       socket.join("allPendingTransactions");
       socket.emit("subscribed", { type: "allPendingTransactions" });
@@ -43,7 +47,7 @@ export async function setupSocketIO(server: HTTPServer) {
 
     socket.on("subscribeBalance", (address: string) => {
       if (!ethers.isAddress(address)) {
-        socket.emit("error", "Invalid Ethereum address");
+        socket.emit("validation_error", "Invalid Ethereum address");
         return;
       }
 
@@ -67,7 +71,7 @@ export async function setupSocketIO(server: HTTPServer) {
     });
 
     socket.on("disconnect", () => {
-      console.log("Cliente desconectado:", socket.id);
+      console.log("Client disconnected:", socket.id);
     });
   });
 

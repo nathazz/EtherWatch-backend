@@ -9,18 +9,23 @@ import {
   getAddressByNonce,
 } from "../../utils/nonce";
 import { HttpStatusCode } from "axios";
+import {
+  AddressBodySchema,
+  SignatureBodySchema,
+} from "../../validators/metamask.schema";
 
 const secret = process.env.JWT_SECRET || "";
 
 export async function createNonce(req: Request, res: Response) {
   try {
-    const { address } = req.body;
+    const parsed = AddressBodySchema.safeParse(req.body);
 
-    if (!address) {
-      res.status(400).json({ error: "Address not found!" });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
 
+    const { address } = parsed.data;
     const nonce = await generateNonce(address);
 
     res.status(200).json({ nonce });
@@ -34,12 +39,14 @@ export async function createNonce(req: Request, res: Response) {
 
 export async function createClientMetaMask(req: Request, res: Response) {
   try {
-    const { signature, nonce } = req.body;
+    const parsed = SignatureBodySchema.safeParse(req.body);
 
-    if (!signature || !nonce) {
-      res.status(400).json({ error: "Signature and nonce not found!" });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
+
+    const { signature, nonce } = parsed.data;
 
     const adress = await getAddressByNonce(nonce);
     const msg = `nonce:${nonce}`;
@@ -77,7 +84,6 @@ export async function createClientMetaMask(req: Request, res: Response) {
     });
   }
 }
-
 export function checkAuth(req: Request, res: Response) {
   const token = req.cookies?.authToken;
 

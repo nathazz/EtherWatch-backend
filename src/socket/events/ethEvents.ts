@@ -2,35 +2,61 @@ import { Server } from "socket.io";
 import { provider } from "../../blockchain/provider";
 import { ethers, formatEther } from "ethers";
 import { MESSAGE_TYPES } from "../../utils/constants";
+import {
+  BalanceResponseSchema,
+  FeeDataResponseSchema,
+} from "../../validators/socket.schema";
+import { TxsResponseSchema } from "../../validators/transactions.schema";
 
 let txPool: any[] = [];
 const MAX_POOL_SIZE = 300;
 let lastGasPrice: string | null = null;
 const balanceCache = new Map<string, string>();
+const queue: string[] = [];
+const MAX_QUEUE_SIZE = 10000;
 
 export function setupPendingTxs(io: Server) {
-  provider.on("pending", async (txHash) => {
+  provider.removeAllListeners("pending");
+
+  provider.on("pending", (txHash) => {
+    if (queue.length < MAX_QUEUE_SIZE) {
+      queue.push(txHash);
+    }
+  });
+
+  setInterval(async () => {
+    if (queue.length === 0) return;
+
+    const txHash = queue.shift();
+    if (!txHash) return;
+
     try {
       const tx = await provider.getTransaction(txHash);
-
       if (tx) {
         if (txPool.length >= MAX_POOL_SIZE) txPool.shift();
         txPool.push(tx);
       }
-      
     } catch (error) {
       console.error("Error fetching pending tx:", error);
     }
-  });
-
+  }, 100);
   setInterval(() => {
     if (txPool.length === 0) return;
+
+    const data = { txs: txPool };
+    const parsed = TxsResponseSchema.safeParse(data);
+
+    if (!parsed.success) {
+      console.error("Invalid pending txs data:", parsed.error);
+      txPool = [];
+      return;
+    }
+
     io.to("allPendingTransactions").emit(
-      MESSAGE_TYPES.ALL_PENDING_TRANSACTIONS,
-      {
-        txs: txPool,
-      },
+      "getAllPendingTransactions",
+      parsed.data,
     );
+
     txPool = [];
   }, 3000);
 }
@@ -40,11 +66,15 @@ export async function updateBalances(io: Server) {
     if (!room.startsWith("balance:")) continue;
 
     const address = room.replace("balance:", "");
-
     try {
       const balance = await provider.getBalance(address);
       const txCount = await provider.getTransactionCount(address);
-      const eth = formatEther(balance);
+      const eth = parseFloat(formatEther(balance)).toFixed(6);
+
+      const data = { address, balance: eth, txCount };
+      const parsed = BalanceResponseSchema.safeParse(data);
+
+      if (parsed.error) return;
 
       const lastBalance = balanceCache.get(address);
 
@@ -75,11 +105,17 @@ export async function updateFeeData(io: Server) {
     if (gasPriceGwei !== lastGasPrice) {
       lastGasPrice = gasPriceGwei;
 
-      io.to("feeData").emit(MESSAGE_TYPES.FEE_DATA, {
+      const data = {
         gasPrice: gasPriceGwei,
         maxFeePerGas: ethers.formatUnits(maxFeePerGas, "gwei"),
         maxPriorityFeePerGas: ethers.formatUnits(maxPriorityFeePerGas, "gwei"),
-      });
+      };
+
+      const parsed = FeeDataResponseSchema.safeParse(data);
+
+      if (!parsed.success) return;
+
+      io.to("feeData").emit(MESSAGE_TYPES.FEE_DATA, parsed.data);
     }
   } catch (error) {
     console.error("Error fetching fee data:", error);

@@ -1,7 +1,12 @@
-import { ethers } from "ethers";
+import { ethers, TransactionResponse } from "ethers";
 import type { Request, Response } from "express";
 import { httpProvider } from "../../blockchain/provider";
-import { isValidBlock, isValidHash } from "../../utils/validates";
+import { EnsProfileResponseSchema } from "../../validators/ens.schema";
+import { EthereumAddressSchema } from "../../validators/socket.schema";
+import { BlockParamsSchema } from "../../validators/block.schema";
+import {
+  hashParamsSchema,
+} from "../../validators/transactions.schema";
 
 export function health(req: Request, res: Response) {
   res.status(200).json({ status: "OK" });
@@ -10,8 +15,9 @@ export function health(req: Request, res: Response) {
 export async function getTransaction(req: Request, res: Response) {
   try {
     const { hash } = req.params;
+    const parsedHash = hashParamsSchema.safeParse({ hash });
 
-    if (!hash || !isValidHash(hash)) {
+    if (!parsedHash.success) {
       res.status(400).json({ error: "Invalid tx hash!" });
       return;
     }
@@ -23,7 +29,7 @@ export async function getTransaction(req: Request, res: Response) {
       return;
     }
 
-    res.status(200).json({ tx });
+    res.status(200).json({tx});
   } catch (error) {
     console.error(`Get Transaction Error:`, error);
     res.status(500).json({
@@ -34,19 +40,22 @@ export async function getTransaction(req: Request, res: Response) {
 
 export async function getBlock(req: Request, res: Response) {
   try {
-    const { block } = req.params;
-
-    if (!block || !isValidBlock(block)) {
-      res.status(400).json({ error: "Invalid block!" });
+   const parsedParams = BlockParamsSchema.safeParse(req.params);
+   
+    console.log(parsedParams);
+    if (!parsedParams.success) {
+      res.status(400).json({ error: "Invalid Block!" });
       return;
     }
 
-    const blockParam = /^\d+$/.test(block) ? parseInt(block) : block;
+    const blockParam = /^\d+$/.test(parsedParams.data.block)
+      ? parseInt(parsedParams.data.block)
+      : parsedParams.data.block;
 
     const blockData = await httpProvider.getBlock(blockParam);
 
     if (!blockData) {
-      res.status(404).json({ error: "Block not found!" });
+      res.status(404).json({ error: "Block Not Found!" });
       return;
     }
 
@@ -63,7 +72,9 @@ export async function getEnsProfile(req: Request, res: Response) {
   try {
     const { address } = req.params;
 
-    if (!address || !ethers.isAddress(address)) {
+    const parsedAddress = EthereumAddressSchema.safeParse(address);
+
+    if (!parsedAddress.success) {
       res.status(400).json({ error: "Invalid Ethereum address." });
       return;
     }
@@ -78,12 +89,20 @@ export async function getEnsProfile(req: Request, res: Response) {
       return;
     }
 
-    res.status(200).json({
+    const response = {
       ens: {
         name: ensName,
         avatar,
       },
-    });
+    };
+
+  
+    if (!response) {
+      res.status(404).json({ error: "Invalid ENS profile format" });
+      return;
+    }
+
+    res.status(200).json(response);
   } catch (error) {
     console.error(`Error resolving ENS:`, error);
     res.status(500).json({
