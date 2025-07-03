@@ -4,9 +4,7 @@ import { httpProvider } from "../../blockchain/provider";
 import { EnsProfileResponseSchema } from "../../validators/ens.schema";
 import { EthereumAddressSchema } from "../../validators/socket.schema";
 import { BlockParamsSchema } from "../../validators/block.schema";
-import {
-  hashParamsSchema,
-} from "../../validators/transactions.schema";
+import { hashParamsSchema } from "../../validators/transactions.schema";
 
 export function health(req: Request, res: Response) {
   res.status(200).json({ status: "OK" });
@@ -29,7 +27,7 @@ export async function getTransaction(req: Request, res: Response) {
       return;
     }
 
-    res.status(200).json({tx});
+    res.status(200).json({ tx });
   } catch (error) {
     console.error(`Get Transaction Error:`, error);
     res.status(500).json({
@@ -40,9 +38,8 @@ export async function getTransaction(req: Request, res: Response) {
 
 export async function getBlock(req: Request, res: Response) {
   try {
-   const parsedParams = BlockParamsSchema.safeParse(req.params);
-   
-    console.log(parsedParams);
+    const parsedParams = BlockParamsSchema.safeParse(req.params);
+
     if (!parsedParams.success) {
       res.status(400).json({ error: "Invalid Block!" });
       return;
@@ -96,7 +93,6 @@ export async function getEnsProfile(req: Request, res: Response) {
       },
     };
 
-  
     if (!response) {
       res.status(404).json({ error: "Invalid ENS profile format" });
       return;
