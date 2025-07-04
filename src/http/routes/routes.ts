@@ -8,6 +8,7 @@ import {
 import {
   getEthereumMarketData,
   getEthereumPrice,
+  getFeeData,
 } from "../controllers/ethData";
 import {
   checkAuth,
@@ -28,6 +29,7 @@ router.get("/ens-profile/:address", getEnsProfile);
 // Eth data
 router.get("/eth_price", getEthereumPrice);
 router.get("/eth_market", getEthereumMarketData);
+router.get("/eth_feeData", getFeeData);
 
 //metamask
 router.post("/nonce", createNonce);

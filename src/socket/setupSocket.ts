@@ -1,12 +1,9 @@
 import { ethers } from "ethers";
 import { Server as HTTPServer } from "http";
 import { Server } from "socket.io";
-import {
-  setupPendingTxs,
-  updateBalances,
-  updateFeeData,
-} from "./events/ethEvents";
+
 import { provider } from "../blockchain/provider";
+import { setupPendingTxs, updateBalances } from "./handlers/ethEvents";
 
 export async function setupSocketIO(server: HTTPServer) {
   const io = new Server(server, {
@@ -21,7 +18,6 @@ export async function setupSocketIO(server: HTTPServer) {
   provider.on("block", async () => {
     try {
       await updateBalances(io);
-      await updateFeeData(io);
     } catch (error) {
       console.error("Error on block handler:", error);
     }
@@ -56,18 +52,9 @@ export async function setupSocketIO(server: HTTPServer) {
       socket.emit("subscribed", { type: "balance", address });
     });
 
-    socket.on("unsubscribeBalance", (address: string) => {
+    socket.on("unsubscribeBalance", async (address: string) => {
       const room = `balance:${address.toLowerCase()}`;
       socket.leave(room);
-    });
-
-    socket.on("subscribeFeeData", () => {
-      socket.join("feeData");
-      socket.emit("subscribed", { type: "feeData" });
-    });
-
-    socket.on("unsubscribeFeeData", () => {
-      socket.leave("feeData");
     });
 
     socket.on("disconnect", () => {

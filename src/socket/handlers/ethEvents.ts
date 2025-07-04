@@ -4,7 +4,6 @@ import { ethers, formatEther } from "ethers";
 import { MESSAGE_TYPES } from "../../utils/constants";
 import {
   BalanceResponseSchema,
-  FeeDataResponseSchema,
 } from "../../validators/socket.schema";
 import { TxsResponseSchema } from "../../validators/transactions.schema";
 
@@ -90,34 +89,5 @@ export async function updateBalances(io: Server) {
     } catch (error) {
       console.error(`Error fetching balance for ${address}:`, error);
     }
-  }
-}
-
-export async function updateFeeData(io: Server) {
-  try {
-    const feeData = await provider.getFeeData();
-    const { gasPrice, maxFeePerGas, maxPriorityFeePerGas } = feeData;
-
-    if (!gasPrice || !maxFeePerGas || !maxPriorityFeePerGas) return;
-
-    const gasPriceGwei = ethers.formatUnits(gasPrice, "gwei");
-
-    if (gasPriceGwei !== lastGasPrice) {
-      lastGasPrice = gasPriceGwei;
-
-      const data = {
-        gasPrice: gasPriceGwei,
-        maxFeePerGas: ethers.formatUnits(maxFeePerGas, "gwei"),
-        maxPriorityFeePerGas: ethers.formatUnits(maxPriorityFeePerGas, "gwei"),
-      };
-
-      const parsed = FeeDataResponseSchema.safeParse(data);
-
-      if (!parsed.success) return;
-
-      io.to("feeData").emit(MESSAGE_TYPES.FEE_DATA, parsed.data);
-    }
-  } catch (error) {
-    console.error("Error fetching fee data:", error);
   }
 }

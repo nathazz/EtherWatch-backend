@@ -1,6 +1,9 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import axios from "axios";
 import { MarketDataSchema, PriceSchema } from "../../validators/ethData.schema";
+import { FeeDataResponseSchema } from "../../validators/socket.schema";
+import { ethers } from "ethers";
+import { httpProvider } from "../../blockchain/provider";
 
 export async function getEthereumPrice(req: Request, res: Response) {
   try {
@@ -92,6 +95,38 @@ export async function getEthereumMarketData(req: Request, res: Response) {
     res.json(parsed.data);
   } catch (error) {
     console.error(`Error fetching ETH market data:`, error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}
+
+export async function getFeeData(req: Request, res: Response) {
+  try {
+    const feeData = await httpProvider.getFeeData();
+    const { gasPrice, maxFeePerGas, maxPriorityFeePerGas } = feeData;
+
+    if (!gasPrice || !maxFeePerGas || !maxPriorityFeePerGas) {
+      res.status(500).json({ error: "Incomplete fee data from provider" });
+      return;
+    }
+
+    const data = {
+      gasPrice: ethers.formatUnits(gasPrice, "gwei"),
+      maxFeePerGas: ethers.formatUnits(maxFeePerGas, "gwei"),
+      maxPriorityFeePerGas: ethers.formatUnits(maxPriorityFeePerGas, "gwei"),
+    };
+
+    const parsed = FeeDataResponseSchema.safeParse(data);
+
+    if (!parsed.success) {
+      res.status(500).json({ error: "Invalid Fee Data format" });
+      return;
+    }
+
+    res.json(parsed.data);
+  } catch (error) {
+    console.error(`Error fetching Fee Data:`, error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Unknown error",
     });
