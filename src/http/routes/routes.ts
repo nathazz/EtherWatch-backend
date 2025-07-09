@@ -1,11 +1,13 @@
 import { Router } from "express";
 import {
+  getBalance,
   getBlock,
   getEnsProfile,
   getTransaction,
   health,
 } from "../controllers/infos";
 import {
+  getEthereumInfos,
   getEthereumMarketData,
   getEthereumPrice,
   getFeeData,
@@ -25,11 +27,13 @@ router.get("/health", health);
 router.get("/tx/:hash", getTransaction);
 router.get("/block/:block", getBlock);
 router.get("/ens-profile/:address", getEnsProfile);
+router.get("/balance/:address", getBalance)
 
 // Eth data
 router.get("/eth_price", getEthereumPrice);
 router.get("/eth_market", getEthereumMarketData);
 router.get("/eth_feeData", getFeeData);
+router.get("/eth_infos", getEthereumInfos)
 
 //metamask
 router.post("/nonce", createNonce);

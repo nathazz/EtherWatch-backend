@@ -2,9 +2,12 @@ import { ethers, TransactionResponse } from "ethers";
 import type { Request, Response } from "express";
 import { httpProvider } from "../../blockchain/provider";
 import { EnsProfileResponseSchema } from "../../validators/ens.schema";
-import { EthereumAddressSchema } from "../../validators/socket.schema";
+import {
+  BalanceResponseSchema,
+  EthereumAddressSchema,
+} from "../../validators/infos.schema";
 import { BlockParamsSchema } from "../../validators/block.schema";
-import { hashParamsSchema } from "../../validators/transactions.schema";
+import { hashParamsSchema } from "../../validators/hashParams.schema";
 
 export function health(req: Request, res: Response) {
   res.status(200).json({ status: "OK" });
@@ -20,7 +23,8 @@ export async function getTransaction(req: Request, res: Response) {
       return;
     }
 
-    const tx = await httpProvider.getTransaction(hash);
+    const tx: TransactionResponse | null =
+      await httpProvider.getTransaction(hash);
 
     if (!tx) {
       res.status(404).json({ error: "Transaction not found!" });
@@ -93,14 +97,58 @@ export async function getEnsProfile(req: Request, res: Response) {
       },
     };
 
-    if (!response) {
-      res.status(404).json({ error: "Invalid ENS profile format" });
+    const parsed = EnsProfileResponseSchema.safeParse(response);
+
+    if (!parsed.success) {
+      res
+        .status(500)
+        .json({
+          error: "Invalid ENS profile format",
+          details: parsed.error.issues,
+        });
       return;
     }
 
     res.status(200).json(response);
   } catch (error) {
     console.error(`Error resolving ENS:`, error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function getBalance(req: Request, res: Response) {
+  try {
+    const { address } = req.params;
+
+    const parsedAddress = EthereumAddressSchema.safeParse(address);
+
+    if (!parsedAddress.success) {
+      res.status(400).json({ error: "Invalid Ethereum address." });
+      return;
+    }
+
+    const balance = await httpProvider.getBalance(address);
+    const balanceEth = ethers.formatEther(balance);
+    const txCount = await httpProvider.getTransactionCount(address);
+
+    const response = {
+      address: address,
+      balance: balanceEth,
+      txCount: txCount,
+    };
+
+    const parsed = BalanceResponseSchema.safeParse(response);
+
+    if (!parsed.success) {
+      res.status(500).json({ error: "Invalid balance data format" });
+      return;
+    }
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(`Balance Error:`, error);
     res.status(500).json({
       error: error instanceof Error ? error.message : String(error),
     });

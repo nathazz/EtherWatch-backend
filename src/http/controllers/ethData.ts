@@ -1,7 +1,7 @@
 import e, { Request, Response } from "express";
 import axios from "axios";
 import { MarketDataSchema, PriceSchema } from "../../validators/ethData.schema";
-import { FeeDataResponseSchema } from "../../validators/socket.schema";
+import { EthereumInfoSchema, FeeDataResponseSchema } from "../../validators/infos.schema";
 import { ethers } from "ethers";
 import { httpProvider } from "../../blockchain/provider";
 
@@ -130,5 +130,22 @@ export async function getFeeData(req: Request, res: Response) {
     res.status(500).json({
       error: error instanceof Error ? error.message : "Unknown error",
     });
+  }
+}
+
+export async function getEthereumInfos(req: Request, res: Response) {
+  try {
+    const { data } = await axios.get("https://api.coingecko.com/api/v3/coins/ethereum", {
+      headers: {
+        "x-cg-demo-api-key": process.env.COIN_GECKO_KEY!,
+      },
+    });
+
+    const ethereumInfo = EthereumInfoSchema.parse(data);
+
+    res.status(200).json(ethereumInfo);
+  } catch (error) {
+    console.error("Error fetching Ethereum infos:", error);
+    res.status(500).json({ error: "Failed to fetch Ethereum info" });
   }
 }
