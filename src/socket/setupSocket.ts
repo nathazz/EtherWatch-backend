@@ -1,66 +1,43 @@
 import { ethers } from "ethers";
 import { Server as HTTPServer } from "http";
 import { Server } from "socket.io";
+import { z } from "zod";
+import { setupPendingTxs } from "./handlers/ethEvents";
+import { EthereumAddressSchema } from "../validators/infos.schema";
 
-import { provider } from "../blockchain/provider";
-import { setupPendingTxs, updateBalances } from "./handlers/ethEvents";
+export interface ClientSubscriptions {
+  txs: boolean;
+}
 
 export async function setupSocketIO(server: HTTPServer) {
   const io = new Server(server, {
     cors: {
       origin: process.env.FRONT_END_DEV || "*",
-      methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-      credentials: true,
+      methods: ["GET", "POST"],
     },
   });
 
-  provider.on("block", async () => {
-    try {
-      await updateBalances(io);
-    } catch (error) {
-      console.error("Error on block handler:", error);
-    }
-  });
+  const clientSubs = new Map<string, ClientSubscriptions>();
 
   io.on("connection", (socket) => {
-    console.log("client connected", socket.id);
+    console.log("Client connected:", socket.id);
+    clientSubs.set(socket.id, { txs: false });
 
     socket.on("subscribePendingTxs", () => {
-      provider.listenerCount("pending").then((listenerCount: number) => {
-        if (listenerCount === 0) {
-          setupPendingTxs(io);
-        }
-      });
-
-      socket.join("allPendingTransactions");
-      socket.emit("subscribed", { type: "allPendingTransactions" });
+      clientSubs.get(socket.id)!.txs = true;
     });
 
     socket.on("unsubscribePendingTxs", () => {
-      socket.leave("allPendingTransactions");
-    });
-
-    socket.on("subscribeBalance", (address: string) => {
-      if (!ethers.isAddress(address)) {
-        socket.emit("validation_error", "Invalid Ethereum address");
-        return;
-      }
-
-      const room = `balance:${address.toLowerCase()}`;
-      socket.join(room);
-      socket.emit("subscribed", { type: "balance", address });
-    });
-
-    socket.on("unsubscribeBalance", async (address: string) => {
-      const room = `balance:${address.toLowerCase()}`;
-      socket.leave(room);
+      clientSubs.get(socket.id)!.txs = false;
     });
 
     socket.on("disconnect", () => {
+      clientSubs.delete(socket.id);
       console.log("Client disconnected:", socket.id);
     });
   });
+
+  setupPendingTxs(io, clientSubs);
 
   return io;
 }
