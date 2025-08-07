@@ -26,3 +26,4 @@ Backend service for the etherWatch application. Provides real-time Ethereum netw
 ```bash
 docker compose up --build
 The server will be available at http://localhost:5005
+```

@@ -100,12 +100,10 @@ export async function getEnsProfile(req: Request, res: Response) {
     const parsed = EnsProfileResponseSchema.safeParse(response);
 
     if (!parsed.success) {
-      res
-        .status(500)
-        .json({
-          error: "Invalid ENS profile format",
-          details: parsed.error.issues,
-        });
+      res.status(500).json({
+        error: "Invalid ENS profile format",
+        details: parsed.error.issues,
+      });
       return;
     }
 

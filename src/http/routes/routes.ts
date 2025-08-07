@@ -27,13 +27,13 @@ router.get("/health", health);
 router.get("/tx/:hash", getTransaction);
 router.get("/block/:block", getBlock);
 router.get("/ens-profile/:address", getEnsProfile);
-router.get("/balance/:address", getBalance)
+router.get("/balance/:address", getBalance);
 
 // Eth data
 router.get("/eth_price", getEthereumPrice);
 router.get("/eth_market", getEthereumMarketData);
 router.get("/eth_feeData", getFeeData);
-router.get("/eth_infos", getEthereumInfos)
+router.get("/eth_infos", getEthereumInfos);
 
 //metamask
 router.post("/nonce", createNonce);

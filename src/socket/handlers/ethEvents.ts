@@ -4,13 +4,12 @@ import { ClientSubscriptions } from "../setupSocket";
 
 let isListening = false;
 const DELAY_MS = 5000;
-
 const txQueue: string[] = [];
 let isProcessing = false;
 
-export function setupPendingTxs(
+export function setupPendingTxsOnce(
   io: Server,
-  clientSubs: Map<string, ClientSubscriptions>
+  clientSubs: Map<string, ClientSubscriptions>,
 ) {
   if (isListening) return;
 
@@ -26,7 +25,7 @@ export function setupPendingTxs(
 
 function processTxQueue(
   io: Server,
-  clientSubs: Map<string, ClientSubscriptions>
+  clientSubs: Map<string, ClientSubscriptions>,
 ) {
   isProcessing = true;
 

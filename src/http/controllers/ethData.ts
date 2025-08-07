@@ -1,7 +1,10 @@
 import e, { Request, Response } from "express";
 import axios from "axios";
 import { MarketDataSchema, PriceSchema } from "../../validators/ethData.schema";
-import { EthereumInfoSchema, FeeDataResponseSchema } from "../../validators/infos.schema";
+import {
+  EthereumInfoSchema,
+  FeeDataResponseSchema,
+} from "../../validators/infos.schema";
 import { ethers } from "ethers";
 import { httpProvider } from "../../blockchain/provider";
 
@@ -135,11 +138,14 @@ export async function getFeeData(req: Request, res: Response) {
 
 export async function getEthereumInfos(req: Request, res: Response) {
   try {
-    const { data } = await axios.get("https://api.coingecko.com/api/v3/coins/ethereum", {
-      headers: {
-        "x-cg-demo-api-key": process.env.COIN_GECKO_KEY!,
+    const { data } = await axios.get(
+      "https://api.coingecko.com/api/v3/coins/ethereum",
+      {
+        headers: {
+          "x-cg-demo-api-key": process.env.COIN_GECKO_KEY!,
+        },
       },
-    });
+    );
 
     const ethereumInfo = EthereumInfoSchema.parse(data);
 

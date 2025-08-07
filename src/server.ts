@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import router from "./http/routes/routes";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import swaggerUi from "swagger-ui-express";
+import swaggerDocs from "./swagger.json";
 
 dotenv.config({ path: "../.env" });
 
@@ -23,6 +25,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api", router);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 async function start() {
   const server = createServer(app);
@@ -30,10 +33,10 @@ async function start() {
   await setupSocketIO(server);
 
   const PORT = process.env.PORT || 3000;
-  
+
   server.listen(PORT, () => {
     console.log(
-      `Server listening on http://localhost:${PORT} + ws://localhost:${PORT}`,
+      `Server listening on http://localhost:${PORT}/api/health + ws://localhost:${PORT}`,
     );
   });
 }

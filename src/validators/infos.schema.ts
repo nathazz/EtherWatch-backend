@@ -17,7 +17,6 @@ export const BalanceResponseSchema = z.object({
   txCount: z.number(),
 });
 
-
 export const EthereumInfoSchema = z.object({
   id: z.string(),
   symbol: z.string(),
@@ -59,6 +58,5 @@ export const EthereumInfoSchema = z.object({
     market_cap_change_percentage_24h: z.number(),
   }),
 });
-
 
 export type EthereumInfo = z.infer<typeof EthereumInfoSchema>;

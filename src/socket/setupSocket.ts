@@ -1,9 +1,6 @@
-import { ethers } from "ethers";
 import { Server as HTTPServer } from "http";
 import { Server } from "socket.io";
-import { z } from "zod";
-import { setupPendingTxs } from "./handlers/ethEvents";
-import { EthereumAddressSchema } from "../validators/infos.schema";
+import { setupPendingTxsOnce } from "./handlers/ethEvents";
 
 export interface ClientSubscriptions {
   txs: boolean;
@@ -25,6 +22,8 @@ export async function setupSocketIO(server: HTTPServer) {
 
     socket.on("subscribePendingTxs", () => {
       clientSubs.get(socket.id)!.txs = true;
+
+      setupPendingTxsOnce(io, clientSubs);
     });
 
     socket.on("unsubscribePendingTxs", () => {
@@ -36,8 +35,6 @@ export async function setupSocketIO(server: HTTPServer) {
       console.log("Client disconnected:", socket.id);
     });
   });
-
-  setupPendingTxs(io, clientSubs);
 
   return io;
 }

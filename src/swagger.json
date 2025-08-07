@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Ether Watch API",
+    "version": "1.0.0",
+    "description": "Backend service for the etherWatch application. Provides real-time Ethereum network data via REST APIs and WebSocket events.",
+    "contact": {
+      "email": "nathansg907@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5005/api/",
+      "description": "Development server"
+    },
+    {
+      "url": " ws://localhost:5005/",
+      "description": "Development Socket"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the server is alive.",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Server is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/nonce": {
+      "post": {
+        "summary": "Generate nonce",
+        "description": "Generates a nonce for MetaMask login.",
+        "tags": ["MetaMask"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Address" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Nonce generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nonce": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "Login via MetaMask",
+        "description": "Validates signature and logs user in.",
+        "tags": ["MetaMask"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Login" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": { "type": "string" },
+                    "status": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "summary": "Logout",
+        "description": "Clears session and logout",
+        "tags": ["MetaMask"],
+        "responses": {
+          "200": {
+            "description": "Logged out"
+          }
+        }
+      }
+    },
+    "/check-auth": {
+      "get": {
+        "summary": "Check auth",
+        "description": "Check if user is authenticated",
+        "tags": ["MetaMask"],
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "address": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+
+    "/tx/{hash}": {
+      "get": {
+        "summary": "Get transaction",
+        "tags": ["Client Info"],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Transaction data" },
+          "400": { "description": "Invalid hash" },
+          "404": { "description": "Transaction not found" }
+        }
+      }
+    },
+    "/block/{block}": {
+      "get": {
+        "summary": "Get block info",
+        "tags": ["Client Info"],
+        "parameters": [
+          {
+            "name": "block",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Block info" },
+          "400": { "description": "Invalid block param" }
+        }
+      }
+    },
+    "/ens-profile/{address}": {
+      "get": {
+        "summary": "Get ENS profile",
+        "tags": ["Client Info"],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "ENS Profile ( avatar and username)" },
+          "404": { "description": "ENS not found" }
+        }
+      }
+    },
+    "/balance/{address}": {
+      "get": {
+        "summary": "Get balance and tx count",
+        "tags": ["Client Info"],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Balance info" },
+          "400": { "description": "Invalid address" }
+        }
+      }
+    },
+
+    "/eth_price": {
+      "get": {
+        "summary": "Ethereum price",
+        "tags": ["Ethereum Data"],
+        "responses": {
+          "200": {
+            "description": "ETH price in multiple currencies (usd, eur, brl)"
+          }
+        }
+      }
+    },
+    "/eth_market": {
+      "get": {
+        "summary": "Market data",
+        "tags": ["Ethereum Data"],
+        "responses": {
+          "200": {
+            "description": "ETH market data (cap, volumes, changes)"
+          }
+        }
+      }
+    },
+    "/eth_feeData": {
+      "get": {
+        "summary": "Ethereum fee data",
+        "tags": ["Ethereum Data"],
+        "responses": {
+          "200": {
+            "description": "Gas price, max fee and priority fee"
+          }
+        }
+      }
+    },
+    "/eth_infos": {
+      "get": {
+        "summary": "Ethereum full info",
+        "tags": ["Ethereum Data"],
+        "responses": {
+          "200": {
+            "description": "Complete Ethereum info (github, market data, links, icons, bio)"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "WebSocket for Ethereum data stream ( Pending transactions)",
+        "description": "Once connected, you can listen to Ethereum updates in real time (blocks, txs, fees, etc).",
+        "tags": ["Socket - Pending Transactions"],
+        "responses": {
+          "101": {
+            "description": "Connected - Switching Protocols"
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "required": ["address"],
+        "properties": {
+          "address": {
+            "type": "string",
+            "example": "0x1234567890abcdef..."
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "required": ["signature", "nonce"],
+        "properties": {
+          "signature": {
+            "type": "string",
+            "example": "0xabcd123..."
+          },
+          "nonce": {
+            "type": "string",
+            "example": "nonce-string-uuid"
+          }
+        }
+      },
+      "Pending TX": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "example": "transaction" },
+          "hash": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "chainID": { "type": "string" },
+          "block": { "type": "number" },
+          "value": { "type": "string" },
+          "gasPrice": { "type": "string" },
+          "nonce": { "type": "number" }
+        }
+      }
+    }
+  }
+}
