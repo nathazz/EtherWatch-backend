@@ -2,6 +2,11 @@
 
 Backend service for the etherWatch application. Provides real-time Ethereum network data via REST APIs and WebSocket events.
 
+The full API documentation is available via Swagger UI:
+
+- Local: [http://localhost:5005/docs](http://localhost:5005/api-docs)
+
+
 ## Features
 
 - REST and WebSocket server using Express and Socket.IO
