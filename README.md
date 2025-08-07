@@ -4,7 +4,7 @@ Backend service for the etherWatch application. Provides real-time Ethereum netw
 
 The full API documentation is available via Swagger UI:
 
-- Local: [http://localhost:5005/docs](http://localhost:5005/api-docs)
+- Local: [http://localhost:5005/api-docs](http://localhost:5005/api-docs)
 
 
 ## Features
