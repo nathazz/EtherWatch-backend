@@ -5,12 +5,41 @@ import { EnsProfileResponseSchema } from "../../validators/ens.schema";
 import {
   BalanceResponseSchema,
   EthereumAddressSchema,
+  FeeDataResponseSchema,
 } from "../../validators/infos.schema";
 import { BlockParamsSchema } from "../../validators/block.schema";
 import { hashParamsSchema } from "../../validators/hashParams.schema";
 
-export function health(req: Request, res: Response) {
-  res.status(200).json({ status: "OK" });
+export async function getFeeData(req: Request, res: Response) {
+  try {
+    const feeData = await httpProvider.getFeeData();
+    const { gasPrice, maxFeePerGas, maxPriorityFeePerGas } = feeData;
+
+    if (!gasPrice || !maxFeePerGas || !maxPriorityFeePerGas) {
+      res.status(500).json({ error: "Incomplete fee data from provider" });
+      return;
+    }
+
+    const data = {
+      gasPrice: ethers.formatUnits(gasPrice, "gwei"),
+      maxFeePerGas: ethers.formatUnits(maxFeePerGas, "gwei"),
+      maxPriorityFeePerGas: ethers.formatUnits(maxPriorityFeePerGas, "gwei"),
+    };
+
+    const parsed = FeeDataResponseSchema.safeParse(data);
+
+    if (!parsed.success) {
+      res.status(500).json({ error: "Invalid Fee Data format" });
+      return;
+    }
+
+    res.json(parsed.data);
+  } catch (error) {
+    console.error(`Error fetching Fee Data:`, error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 }
 
 export async function getTransaction(req: Request, res: Response) {

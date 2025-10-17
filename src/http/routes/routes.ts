@@ -1,23 +1,10 @@
 import { Router } from "express";
-import {
-  getBalance,
-  getBlock,
-  getEnsProfile,
-  getTransaction,
-  health,
-} from "../controllers/infos";
-import {
-  getEthereumInfos,
-  getEthereumMarketData,
-  getEthereumPrice,
-  getFeeData,
-} from "../controllers/ethData";
-import {
-  checkAuth,
-  createClientMetaMask,
-  createNonce,
-  logout,
-} from "../controllers/metamaskClient";
+import { getBalance, getBlock, getEnsProfile, getFeeData, getTransaction } from "../ethereumNetwork/ethDatas";
+import { getEthereumInfos, getEthereumMarketData, getEthereumPrice } from "../coinGecko/ethInfos";
+import { checkAuth, createClientMetaMask, createNonce, logout } from "../metamask/metamaskClient";
+import { health } from "../health/health";
+
+
 
 const router = Router();
 

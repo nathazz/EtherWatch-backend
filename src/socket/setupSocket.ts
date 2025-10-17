@@ -1,6 +1,6 @@
 import { Server as HTTPServer } from "http";
 import { Server } from "socket.io";
-import { setupPendingTxsOnce } from "./handlers/ethEvents";
+import { setupPendingTxsOnce } from "./events/ethEvents";
 
 export interface ClientSubscriptions {
   txs: boolean;
