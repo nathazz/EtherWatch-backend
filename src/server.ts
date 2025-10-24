@@ -28,7 +28,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-export const clientRedis = new Redis();
+export const clientRedis = new Redis({
+  host: process.env.REDIS_HOST || "127.0.0.1",
+  port: Number(process.env.REDIS_PORT) || 6379,
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
