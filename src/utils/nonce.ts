@@ -1,20 +1,19 @@
 import { randomBytes } from "crypto";
 import { uuidV4 } from "ethers";
-
-let storage: { [nonce: string]: string } = {};
+import { clientRedis } from "../server";
 
 export async function generateNonce(address: string) {
   const nonce = uuidV4(randomBytes(16));
-
-  storage[nonce] = address;
+  await clientRedis.setex(`nonce:${nonce}`, 300, address);
 
   return nonce;
 }
 
 export async function getAddressByNonce(nonce: string) {
-  return storage[nonce];
+  const address = await clientRedis.get(`nonce:${nonce}`);
+  return address ? address.toString() : null;
 }
 
 export async function clearNonce(nonce: string) {
-  delete storage[nonce];
+  await clientRedis.del(`nonce:${nonce}`);
 }

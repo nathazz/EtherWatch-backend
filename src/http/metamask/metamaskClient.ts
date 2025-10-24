@@ -8,13 +8,10 @@ import {
   generateNonce,
   getAddressByNonce,
 } from "../../utils/nonce";
-import { HttpStatusCode } from "axios";
 import {
   AddressBodySchema,
   SignatureBodySchema,
 } from "../../validators/metamask.schema";
-
-const secret = process.env.JWT_SECRET || "";
 
 export async function createNonce(req: Request, res: Response) {
   try {
@@ -48,35 +45,46 @@ export async function createClientMetaMask(req: Request, res: Response) {
 
     const { signature, nonce } = parsed.data;
 
-    const adress = await getAddressByNonce(nonce);
+    const address = await getAddressByNonce(nonce);
+
+    if (!address) {
+      res.status(400).json({ msg: "Invalid Address!" });
+      return;
+    }
+
     const msg = `nonce:${nonce}`;
 
     const signedMsg = ethers.verifyMessage(msg, signature);
     const recoveredAddress = signedMsg.toLowerCase();
 
-    if (recoveredAddress !== adress.toLowerCase()) {
-      res
-        .status(401)
-        .json({ msg: "Unauthorized!", status: HttpStatusCode.Unauthorized });
+    if (recoveredAddress !== address.toLowerCase()) {
+      res.status(401).json({ msg: "Signature invalid!" });
       return;
     }
 
     await clearNonce(nonce);
 
-    const token = jwt.sign({ address: recoveredAddress }, secret, {
-      expiresIn: "3d",
-    });
+    if (!process.env.JWT_SECRET) {
+      res.status(400).json("Missing JWT variable");
+      return;
+    }
+
+    const token = jwt.sign(
+      { address: recoveredAddress },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "3d",
+      }
+    );
 
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 3 * 24 * 60 * 60 * 1000,
     });
 
-    res
-      .status(200)
-      .json({ msg: "Account validated!", status: HttpStatusCode.Ok });
+    res.status(200).json({ msg: "Account validated!" });
   } catch (error) {
     console.error(`Login Error:`, error);
     res.status(500).json({
@@ -84,16 +92,24 @@ export async function createClientMetaMask(req: Request, res: Response) {
     });
   }
 }
+
 export function checkAuth(req: Request, res: Response) {
-  const token = req.cookies?.authToken;
+  const token = req.cookies.authToken;
 
   if (!token) {
     res.status(401).json({ error: "Not authenticated" });
     return;
   }
 
+  if (!process.env.JWT_SECRET) {
+    res.status(400).json("Missing JWT variable");
+    return;
+  }
+
   try {
-    const decoded = jwt.verify(token, secret) as { address: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
+      address: string;
+    };
     res.status(200).json({ address: decoded.address });
   } catch (error) {
     console.error("CheckAuth Error:", error);
