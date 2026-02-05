@@ -42,6 +42,11 @@ Ensure you have the following installed on your machine:
    git clone <url>
    cd etherWatch-backend 
    ```
+
+1. **Set up environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
 ---
 
 ## Running the Application
